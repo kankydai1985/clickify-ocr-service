@@ -1,9 +1,8 @@
 {
-  "name": "clickify-ocr-service",
+  "name": "clickify-ocr-service", 
   "version": "1.0.0",
   "dependencies": {
-    "canvas": "^2.11.2",
-    "jimp": "^0.22.10",
+    "sharp": "^0.33.2",
     "node-fetch": "^3.3.2"
   }
 }
