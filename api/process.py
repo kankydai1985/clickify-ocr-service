@@ -1,12 +1,5 @@
 from http.server import BaseHTTPRequestHandler
 import json
-import requests
-import cv2
-import numpy as np
-import pytesseract
-from PIL import Image, ImageDraw, ImageFont
-import base64
-import io
 
 class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -22,7 +15,14 @@ class Handler(BaseHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             data = json.loads(post_data.decode('utf-8'))
             
-            result = self.process_image(data)
+            # Простая заглушка - возвращаем оригинальное изображение
+            result = {
+                'success': True,
+                'final_image': data.get('image_url'),
+                'original_image': data.get('image_url'),
+                'text_blocks_found': 0,
+                'message': 'OCR service deployed - basic version'
+            }
             
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -39,19 +39,3 @@ class Handler(BaseHTTPRequestHandler):
                 'success': False,
                 'error': str(e)
             }).encode())
-
-    def process_image(self, data):
-        # Для Vercel временно возвращаем оригинальное изображение
-        # В реальной реализации здесь будет OCR логика
-        
-        return {
-            'success': True,
-            'final_image': data.get('image_url'),
-            'original_image': data.get('image_url'),
-            'text_blocks_found': 0,
-            'message': 'OCR service deployed on Vercel - text replacement coming soon'
-        }
-
-def main(request, response):
-    handler = Handler(request, response, {})
-    handler.handle()
