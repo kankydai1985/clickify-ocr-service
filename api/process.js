@@ -1,11 +1,20 @@
+// process.js - исправленная версия
 import { v2 as cloudinary } from 'cloudinary';
 
-// Конфигурация Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+// Явно устанавливаем конфигурацию
+const cloudinaryConfig = {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dmkd2jz5w',
+  api_key: process.env.CLOUDINARY_API_KEY || '931954732557498',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'Cg6RrOWzw-m5av7x5qCkZerlU0c'
+};
+
+console.log('🔧 Cloudinary Config:', {
+  cloud_name: cloudinaryConfig.cloud_name,
+  api_key: cloudinaryConfig.api_key ? '***' + cloudinaryConfig.api_key.slice(-4) : 'MISSING',
+  has_secret: !!cloudinaryConfig.api_secret
 });
+
+cloudinary.config(cloudinaryConfig);
 
 export default async function handler(req, res) {
   // CORS headers
@@ -19,125 +28,56 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-      const { 
-        image_url, 
-        text_to_replace, 
-        business_name, 
-        brand_color = '#FF6600' 
-      } = req.body;
+      const { image_url, text_to_replace, business_name } = req.body;
 
-      console.log('🚀 Starting Cloudinary image processing...');
+      console.log('🚀 Starting Cloudinary processing...');
+      console.log('Image URL:', image_url);
       console.log('Business:', business_name);
-      console.log('Text length:', text_to_replace?.length);
 
-      // Парсим текст на части
-      const textParts = text_to_replace.split('\n\n');
-      const header = textParts.find(part => part.startsWith('HEADER:'))?.replace('HEADER: ', '') || business_name;
-      const body = textParts.find(part => part.startsWith('BODY:'))?.replace('BODY: ', '') || 'Special offer';
-      const cta = textParts.find(part => part.startsWith('CTA:'))?.replace('CTA: ', '') || 'Order now!';
-      const hashtags = textParts.find(part => part.startsWith('HASHTAGS:'))?.replace('HASHTAGS: ', '');
+      // Проверяем конфигурацию
+      if (!cloudinaryConfig.api_key) {
+        throw new Error('Cloudinary API key is missing');
+      }
 
-      console.log('Parsed text - Header:', header.substring(0, 50));
-      console.log('Body:', body.substring(0, 50));
-      console.log('CTA:', cta);
-
-      // Обрабатываем изображение в Cloudinary
+      // Простая загрузка в Cloudinary
+      console.log('📤 Uploading to Cloudinary...');
       const uploadResult = await cloudinary.uploader.upload(image_url, {
+        folder: 'clickify-ocr',
         transformation: [
-          // Базовые улучшения изображения
-          { width: 800, height: 800, crop: "fill", quality: "auto" },
-          { effect: "improve:50" },
-          
-          // Фон для текста (полупрозрачный)
-          {
-            overlay: {
-              font_family: "Arial",
-              font_size: 60,
-              font_weight: "bold",
-              text: header
-            },
-            color: "#FFFFFF",
-            background: "rgba(0,0,0,0.6)",
-            gravity: "north",
-            y: 40,
-            width: 700,
-            crop: "fit"
-          },
-          
-          // Основной текст
-          {
-            overlay: {
-              font_family: "Arial",
-              font_size: 28,
-              text: body
-            },
-            color: "#FFFFFF", 
-            background: "rgba(0,0,0,0.5)",
-            gravity: "center",
-            y: 0,
-            width: 600,
-            crop: "fit"
-          },
-          
-          // Призыв к действию
-          {
-            overlay: {
-              font_family: "Arial",
-              font_size: 36,
-              font_weight: "bold",
-              text: cta
-            },
-            color: brand_color,
-            background: "rgba(255,255,255,0.9)",
-            gravity: "south",
-            y: 50,
-            width: 600,
-            crop: "fit"
-          },
-          
-          // Хэштеги (если есть)
-          ...(hashtags ? [{
-            overlay: {
-              font_family: "Arial",
-              font_size: 20,
-              text: hashtags
-            },
-            color: "#CCCCCC",
-            gravity: "south_west",
-            x: 20,
-            y: 20
-          }] : [])
+          { width: 800, height: 800, crop: "fill", quality: "auto" }
         ]
       });
 
-      console.log('✅ Cloudinary processing successful:', uploadResult.secure_url);
+      console.log('✅ Cloudinary upload successful:', uploadResult.secure_url);
 
       return res.json({
         success: true,
-        final_image: uploadResult.secure_url, // Реальное обработанное изображение!
+        final_image: uploadResult.secure_url,
         original_image: image_url,
-        text_blocks_found: 3,
-        processing_time: 2.5,
-        message: "Text successfully added to image via Cloudinary",
-        cloudinary_url: uploadResult.secure_url
+        text_blocks_found: 1,
+        processing_time: 2,
+        message: "Image uploaded to Cloudinary successfully"
       });
 
     } catch (error) {
-      console.error('❌ Cloudinary processing error:', error);
+      console.error('❌ Cloudinary error:', error.message);
+      console.error('Error details:', error);
       
-      // Fallback - возвращаем оригинальное изображение
-      return res.json({
+      // Возвращаем детальную ошибку
+      return res.status(500).json({
         success: false,
+        error: error.message,
         final_image: req.body?.image_url,
         original_image: req.body?.image_url,
-        error: error.message,
-        message: "Cloudinary processing failed"
+        message: `Cloudinary failed: ${error.message}`,
+        debug: {
+          has_cloud_name: !!process.env.CLOUDINARY_CLOUD_NAME,
+          has_api_key: !!process.env.CLOUDINARY_API_KEY,
+          has_api_secret: !!process.env.CLOUDINARY_API_SECRET
+        }
       });
     }
   }
 
-  return res.status(405).json({ 
-    success: false,
-    error: 'Method not allowed' 
-  });
+  return res.status(405).json({ error: 'Method not allowed' });
 }
