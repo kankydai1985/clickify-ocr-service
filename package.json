@@ -1,13 +1,8 @@
 {
   "name": "clickify-ocr-service",
-  "version": "1.0.0",
-  "description": "OCR service for Clickify",
-  "main": "api/process.js",
-  "scripts": {
-    "dev": "vercel dev"
-  },
+  "version": "1.0.0", 
   "dependencies": {
-    "tesseract.js": "^5.0.4"
+    "cloudinary": "^1.41.0"
   },
   "engines": {
     "node": "20.x"
