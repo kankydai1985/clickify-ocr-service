@@ -1,5 +1,10 @@
 {
   "name": "clickify-ocr-service",
-  "version": "1.0.0", 
-  "dependencies": {}
+  "version": "1.0.0",
+  "dependencies": {
+    "tesseract.js": "^4.1.1",
+    "jimp": "^0.22.10",
+    "axios": "^1.6.0",
+    "canvas": "^2.11.2"
+  }
 }
