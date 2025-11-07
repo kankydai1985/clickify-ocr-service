@@ -2,7 +2,8 @@
   "name": "clickify-ocr-service",
   "version": "1.0.0",
   "dependencies": {
-    "cloudinary": "^1.41.0"
+    "cloudinary": "^1.41.0",
+    "tesseract.js": "^5.0.4"
   },
   "engines": {
     "node": "20.x"
