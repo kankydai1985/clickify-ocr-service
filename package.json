@@ -7,9 +7,7 @@
     "dev": "vercel dev"
   },
   "dependencies": {
-    "tesseract.js": "^5.0.4",
-    "jimp": "^0.22.10",
-    "axios": "^1.6.8"
+    "tesseract.js": "^5.0.4"
   },
   "engines": {
     "node": "20.x"
